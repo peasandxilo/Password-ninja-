@@ -1,0 +1,122 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Ninja - Slice Strong Passwords!</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #000;
+      color: white;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: #1a1a1a;
+    }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <h2>Password Ninja</h2>
+    <p>Slice strong passwords (8+ chars, symbols, numbers). Avoid weak ones!</p>
+    <p>Score: <span id="score">0</span></p>
+  </div><canvas id="game"></canvas>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let particles = [];
+
+    const strongPasswords = ["P@ssw0rd99", "H@ckM3Plz!", "1234$ecure", "Admin#2024"];
+    const weakPasswords = ["123456", "password", "qwerty", "abc123"];
+
+    class Word {
+      constructor(text, x, y, speed, isStrong) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.isStrong = isStrong;
+        this.sliced = false;
+      }
+
+      draw() {
+        ctx.fillStyle = this.isStrong ? "#00ff00" : "#ff3333";
+        ctx.font = "20px Arial";
+        ctx.fillText(this.text, this.x, this.y);
+      }
+
+      update() {
+        this.y += this.speed;
+      }
+    }
+
+    let words = [];
+
+    function spawnWord() {
+      const isStrong = Math.random() > 0.5;
+      const text = isStrong
+        ? strongPasswords[Math.floor(Math.random() * strongPasswords.length)]
+        : weakPasswords[Math.floor(Math.random() * weakPasswords.length)];
+
+      const x = Math.random() * (canvas.width - 150) + 50;
+      const speed = Math.random() * 1.5 + 1;
+      words.push(new Word(text, x, -30, speed, isStrong));
+    }
+
+    canvas.addEventListener("click", function (e) {
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      for (let word of words) {
+        const textWidth = ctx.measureText(word.text).width;
+        const textHeight = 20;
+        if (
+          !word.sliced &&
+          mouseX >= word.x &&
+          mouseX <= word.x + textWidth &&
+          mouseY >= word.y - textHeight &&
+          mouseY <= word.y
+        ) {
+          word.sliced = true;
+          if (word.isStrong) {
+            score++;
+          } else {
+            score--;
+          }
+          document.getElementById("score").textContent = score;
+        }
+      }
+    });
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      words.forEach((word) => {
+        if (!word.sliced) {
+          word.update();
+          word.draw();
+        }
+      });
+      words = words.filter((word) => word.y < canvas.height && !word.sliced);
+      requestAnimationFrame(gameLoop);
+    }
+
+    setInterval(spawnWord, 1500);
+    gameLoop();
+  </script></body>
+</html>
